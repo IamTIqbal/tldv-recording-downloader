@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recording Downloader for tl;dv</title>
+  <meta name="description" content="Unofficial browser extension to download your own tl;dv meeting recordings as MP4 or .ts.">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --ground: #f6f6f9; --surface: #ffffff; --surface-2: #f0f0f5; --border: #e4e4ec; --border-strong: #d4d4e0;
+      --text: #16161d; --muted: #55556a; --accent: #4f46e5; --accent-hover: #4338ca; --accent-soft: #e0e3ff;
+      --accent-ink: #3730a3; --on-accent: #ffffff; --warn-soft: #fff4db; --warn-ink: #7a4b00;
+      --shadow: 0 12px 32px rgba(22, 22, 29, 0.08);
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ground: #111116; --surface: #1b1b22; --surface-2: #26262f; --border: #2e2e39; --border-strong: #3d3d4a;
+        --text: #f2f2f7; --muted: #a3a3b5; --accent: #7c74ff; --accent-hover: #918aff; --accent-soft: #2a2860;
+        --accent-ink: #c9c6ff; --on-accent: #0d0d14; --warn-soft: #3a2d10; --warn-ink: #f5cf7a;
+        --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      }
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--ground); color: var(--text); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 48px 16px 64px; }
+    header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 20px; }
+    .brand img { width: 40px; height: 40px; }
+    h1 { font-size: clamp(26px, 5vw, 36px); line-height: 1.2; margin: 0; letter-spacing: -0.01em; }
+    h2 { font-size: 19px; margin: 0; }
+    p { margin: 0; }
+    .muted { color: var(--muted); }
+    .small { font-size: 14px; }
+    .cards { display: grid; gap: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+    .card.current { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow); }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .tag { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); }
+    .tag.warn { background: var(--warn-soft); color: var(--warn-ink); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 20px; border-radius: 12px; font-weight: 600; font-size: 15px; text-decoration: none; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); align-self: flex-start; }
+    .btn:hover { background: var(--surface-2); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+    code { font: 14px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
+    footer { margin-top: 40px; display: flex; flex-direction: column; gap: 8px; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand"><img src="logo.svg" alt=""> Recording Downloader for tl;dv</div>
+      <h1>Download your own tl;dv recordings as MP4</h1>
+      <p class="muted">No re-encoding and no quality loss, and the audio is kept. It uses your existing tl;dv login,
+        and files go straight to your computer. Free and open source.</p>
+    </header>
+
+    <div class="cards">
+      <section class="card" id="edge">
+        <div class="card-head"><h2>Microsoft Edge</h2><span class="tag" id="edge-tag">One click</span></div>
+        <div id="edge-ready">
+          <p class="muted">Install it from the official Microsoft Edge Add-ons store.</p>
+        </div>
+        <a class="btn btn-primary" id="edge-link" href="#">Get it for Edge</a>
+        <p class="muted small" id="edge-pending" hidden>It's being reviewed by Microsoft. Until it's approved, use the
+          Chrome steps below: they work in Edge too (open <code>edge://extensions</code> instead).</p>
+      </section>
+
+      <section class="card" id="firefox">
+        <div class="card-head"><h2>Firefox</h2><span class="tag" id="firefox-tag">One click</span></div>
+        <p class="muted">Signed by Mozilla. Click the button, then <strong>Continue to installation</strong> and
+          <strong>Add</strong>. It updates itself.</p>
+        <a class="btn btn-primary" id="firefox-link" href="firefox/recording-downloader-latest.xpi">Add to Firefox</a>
+        <p class="muted small" id="firefox-pending" hidden>The Firefox version is almost ready. Check back soon.</p>
+      </section>
+
+      <section class="card" id="chrome">
+        <div class="card-head"><h2>Google Chrome</h2><span class="tag warn">About a minute</span></div>
+        <p class="muted">Chrome only allows one-click installs from its paid Web Store, so this one takes 4 steps:</p>
+        <ol>
+          <li>Download <strong>recording-downloader-…-chrome.zip</strong> from the latest release, then unzip it.</li>
+          <li>Open <code>chrome://extensions</code> and turn on <strong>Developer mode</strong> (top right).</li>
+          <li>Click <strong>Load unpacked</strong> and choose the unzipped <strong>recording-downloader</strong> folder.</li>
+          <li>Pin it: click the puzzle-piece icon, then the pin.</li>
+        </ol>
+        <a class="btn" href="https://github.com/IamTIqbal/tldv-recording-downloader/releases/latest">Download for Chrome</a>
+        <p class="muted small">Keep the unzipped folder, because Chrome loads the extension from it.</p>
+      </section>
+    </div>
+
+    <footer class="small muted">
+      <p>How to use it: open a recording on tldv.io, click the extension icon, then <strong>Download recording</strong>.</p>
+      <p>Unofficial. Not affiliated with or endorsed by tl;dv. Works only for recordings your account can already open.
+        <a href="https://github.com/IamTIqbal/tldv-recording-downloader">Source code</a> ·
+        <a href="https://github.com/IamTIqbal/tldv-recording-downloader/blob/main/PRIVACY.md">Privacy</a> ·
+        <a href="https://github.com/IamTIqbal/tldv-recording-downloader/issues">Report a problem</a></p>
+    </footer>
+  </main>
+
+  <script>
+    // Paste the Edge Add-ons store link here once Microsoft approves the listing.
+    const EDGE_STORE_URL = '';
+
+    if (EDGE_STORE_URL) {
+      document.getElementById('edge-link').href = EDGE_STORE_URL;
+    } else {
+      document.getElementById('edge-link').hidden = true;
+      document.getElementById('edge-ready').hidden = true;
+      document.getElementById('edge-pending').hidden = false;
+      document.getElementById('edge-tag').textContent = 'In review';
+      document.getElementById('edge-tag').classList.add('warn');
+    }
+
+    // The signed Firefox file is published next to this page; hide the button until it exists.
+    fetch('firefox/updates.json', { cache: 'no-store' }).then((res) => {
+      if (res.ok) return;
+      throw new Error('not yet');
+    }).catch(() => {
+      document.getElementById('firefox-link').hidden = true;
+      document.getElementById('firefox-pending').hidden = false;
+      document.getElementById('firefox-tag').textContent = 'Coming soon';
+      document.getElementById('firefox-tag').classList.add('warn');
+    });
+
+    // Put the visitor's own browser first.
+    const ua = navigator.userAgent;
+    const current = /Edg\//.test(ua) ? 'edge' : /Firefox\//.test(ua) ? 'firefox' : /Chrome\//.test(ua) ? 'chrome' : null;
+    if (current) {
+      const card = document.getElementById(current);
+      card.classList.add('current');
+      card.parentElement.prepend(card);
+    }
+  </script>
+</body>
+</html>
