@@ -2,10 +2,13 @@
   "name": "tldv-recording-downloader",
   "version": "0.1.0",
   "private": true,
-  "description": "Chrome extension to download your own tl;dv meeting recordings as .ts or .mp4",
+  "description": "Browser extension (Chrome, Edge, Firefox) to download your own tl;dv meeting recordings as .ts or .mp4",
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.js",
+    "build": "node scripts/build.mjs",
+    "lint:firefox": "node scripts/build.mjs firefox && npx -y web-ext@8 lint --self-hosted --source-dir dist/firefox",
+    "sign:firefox": "node scripts/build.mjs firefox && npx -y web-ext@8 sign --source-dir dist/firefox --channel unlisted && node scripts/firefox-release.mjs",
     "vendor": "cp node_modules/mediabunny/dist/bundles/mediabunny.min.mjs src/vendor/ && cp node_modules/mediabunny/LICENSE src/vendor/mediabunny.LICENSE"
   },
   "devDependencies": {

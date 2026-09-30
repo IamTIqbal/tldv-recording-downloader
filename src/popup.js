@@ -2,11 +2,23 @@ import { meetingIdFromUrl, titleFromTab } from './lib/tldv.js';
 
 const $ = (id) => document.getElementById(id);
 
+// Firefox lets people switch site access off after installing. Without it the
+// extension can't see the tab's address or the tl;dv login.
+const tldvOrigins = chrome.runtime.getManifest().host_permissions;
+const hasAccess = await chrome.permissions.contains({ origins: tldvOrigins });
+
 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 const meetingId = tab && meetingIdFromUrl(tab.url || '');
 const { authToken } = await chrome.storage.session.get('authToken');
 
-if (!meetingId) {
+if (!hasAccess) {
+  $('meeting-title').textContent = 'Access to tl;dv is off';
+  $('message').textContent = 'Allow access to tldv.io, then reload your recording.';
+  $('allow').hidden = false;
+  $('allow').onclick = () => {
+    chrome.permissions.request({ origins: tldvOrigins }).then((granted) => granted && window.close());
+  };
+} else if (!meetingId) {
   $('meeting-title').textContent = 'No recording on this tab';
   $('message').textContent = 'Open one of your recordings on tldv.io, then click here again.';
 } else {
