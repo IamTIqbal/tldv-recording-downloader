@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Recording Downloader</title>
+  <link rel="stylesheet" href="ui.css">
+  <style>
+    body { width: 340px; }
+    main { display: flex; flex-direction: column; gap: 16px; padding: 18px; background: var(--surface); }
+    .meeting { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 12px; background: var(--surface-2); }
+    .meeting-icon { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; }
+    .meeting-icon svg { width: 22px; height: 22px; }
+    .meeting-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    #meeting-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn { width: 100%; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand"><img src="icons/logo.svg" alt=""> Recording Downloader</div>
+    <div class="meeting">
+      <div class="meeting-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg>
+      </div>
+      <div class="meeting-text">
+        <span id="meeting-title">Checking this tab…</span>
+        <span id="message" class="small muted"></span>
+      </div>
+    </div>
+    <button id="download" class="btn btn-primary" type="button" hidden>Download recording</button>
+    <button id="reload" class="btn" type="button" hidden>Reload page</button>
+    <span class="small muted">Uses your tl;dv login in this browser. Files are saved straight to your computer.</span>
+  </main>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

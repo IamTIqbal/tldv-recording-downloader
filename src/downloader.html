@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recording Downloader</title>
+  <link rel="icon" href="icons/icon-32.png">
+  <link rel="stylesheet" href="ui.css">
+  <style>
+    main { max-width: 600px; margin: 0 auto; padding: 40px 16px 48px; display: flex; flex-direction: column; gap: 18px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .card { padding: 28px; display: flex; flex-direction: column; gap: 24px; }
+    .heading { display: flex; flex-direction: column; gap: 10px; }
+    #title { font-size: 26px; font-weight: 700; overflow-wrap: anywhere; }
+
+    .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+    .step { display: flex; gap: 12px; align-items: flex-start; }
+    .step-icon { width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px; }
+    .step-icon svg { width: 22px; height: 22px; display: none; }
+    .step[data-state="pending"] .i-pending,
+    .step[data-state="active"] .i-active,
+    .step[data-state="done"] .i-done,
+    .step[data-state="error"] .i-error { display: block; }
+    .i-active { animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .i-active { animation: none; } }
+    .step-body { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 0; }
+    .step-title { font-weight: 500; }
+    .step[data-state="pending"] .step-title { color: var(--muted); }
+    .step[data-state="waiting"] .i-pending { display: block; stroke: var(--accent); }
+    .step[data-state="active"] .step-title,
+    .step[data-state="waiting"] .step-title { font-weight: 600; }
+    .step-detail { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .step-detail:empty { display: none; }
+
+    .banner svg { display: none; }
+    .banner.ok .b-ok, .banner.error .b-error, .banner.info .b-info { display: block; }
+
+    .actions { display: flex; flex-direction: column; gap: 10px; }
+    .actions .btn-primary { min-height: 52px; font-size: 16px; }
+    .footnote { text-align: center; margin: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="topbar">
+      <div class="brand"><img src="icons/logo.svg" alt=""> Recording Downloader</div>
+      <span id="keep-open" class="pill-warn" hidden>Keep this tab open</span>
+    </header>
+
+    <section class="card" aria-live="polite">
+      <div class="heading">
+        <h1 id="title">Loading recording…</h1>
+        <div id="chips" class="chips"></div>
+      </div>
+
+      <ol class="steps">
+        <li class="step" id="step-find" data-state="active">
+          <span class="step-icon" aria-hidden="true">
+            <svg class="i-pending" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.2"><circle cx="12" cy="12" r="9"/></svg>
+            <svg class="i-active" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9" stroke-opacity="0.25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>
+            <svg class="i-done" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 2.5 5-5.5"/></svg>
+            <svg class="i-error" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>
+          </span>
+          <div class="step-body">
+            <span class="step-title">Finding the recording</span>
+            <span class="step-detail" id="find-detail"></span>
+          </div>
+        </li>
+        <li class="step" id="step-download" data-state="pending">
+          <span class="step-icon" aria-hidden="true">
+            <svg class="i-pending" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.2"><circle cx="12" cy="12" r="9"/></svg>
+            <svg class="i-active" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9" stroke-opacity="0.25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>
+            <svg class="i-done" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 2.5 5-5.5"/></svg>
+            <svg class="i-error" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>
+          </span>
+          <div class="step-body">
+            <span class="step-title">Downloading video</span>
+            <div class="progress" id="download-bar" hidden><div></div></div>
+            <span class="step-detail" id="download-detail"></span>
+          </div>
+        </li>
+        <li class="step" id="step-save" data-state="pending">
+          <span class="step-icon" aria-hidden="true">
+            <svg class="i-pending" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.2"><circle cx="12" cy="12" r="9"/></svg>
+            <svg class="i-active" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9" stroke-opacity="0.25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>
+            <svg class="i-done" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 2.5 5-5.5"/></svg>
+            <svg class="i-error" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>
+          </span>
+          <div class="step-body">
+            <span class="step-title">Save your file</span>
+            <div class="progress" id="convert-bar" hidden><div></div></div>
+            <span class="step-detail" id="save-detail"></span>
+          </div>
+        </li>
+      </ol>
+
+      <div id="banner" class="banner" hidden>
+        <svg class="b-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 2.5 5-5.5"/></svg>
+        <svg class="b-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>
+        <svg class="b-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.01"/></svg>
+        <span id="banner-text"></span>
+      </div>
+
+      <button id="grant" class="btn btn-primary" type="button" hidden>Allow access</button>
+
+      <div id="actions" class="actions" hidden>
+        <button id="save-mp4" class="btn btn-primary" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          Save as MP4
+        </button>
+        <button id="save-ts" class="btn" type="button">Save original (.ts)</button>
+        <span class="small muted">MP4 plays everywhere. The .ts is the untouched original.</span>
+      </div>
+
+      <button id="retry" class="btn" type="button" hidden>Try again</button>
+    </section>
+
+    <p class="footnote small muted">Uses your tl;dv login in this browser. Files are saved straight to your computer.</p>
+  </main>
+  <script type="module" src="downloader.js"></script>
+</body>
+</html>
