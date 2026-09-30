@@ -1,6 +1,6 @@
 {
   "name": "tldv-recording-downloader",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Browser extension (Chrome, Edge, Firefox) to download your own tl;dv meeting recordings as .ts or .mp4",
   "type": "module",
